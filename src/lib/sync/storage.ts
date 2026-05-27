@@ -68,20 +68,3 @@ export function decodeContextToken(token: string): ContextFile[] | null {
   }
 }
 
-// Legacy API compatibility — these are now no-ops since storage is self-contained
-export async function saveContext(
-  _token: string,
-  _contextFiles: ContextFile[]
-): Promise<void> {
-  // No-op: context is encoded in the token itself
-}
-
-export async function loadContext(
-  token: string
-): Promise<ContextFile[] | null> {
-  return decodeContextToken(token);
-}
-
-export async function deleteContext(_token: string): Promise<void> {
-  // No-op: just discard the token client-side
-}
