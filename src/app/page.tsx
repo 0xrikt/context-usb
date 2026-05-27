@@ -13,8 +13,9 @@ export default function Home() {
   const { contextFiles, rawEntries } = useStore();
   const hasContext = contextFiles.some((f) => f.content.length > 0);
   const hasData = rawEntries.length > 0;
+  const [showApp, setShowApp] = useState(hasData || hasContext);
   const [activeTab, setActiveTab] = useState(
-    hasContext ? "context" : hasData ? "import" : "import"
+    hasContext ? "context" : "import"
   );
 
   return (
@@ -35,14 +36,14 @@ export default function Home() {
 
       {/* Main */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
-        {!hasData && !hasContext ? (
-          <LandingHero onStart={() => setActiveTab("import")} />
+        {!showApp ? (
+          <LandingHero onStart={() => { setShowApp(true); setActiveTab("import"); }} />
         ) : null}
 
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className={!hasData && !hasContext ? "hidden" : ""}
+          className={!showApp ? "hidden" : ""}
         >
           <TabsList className="w-full grid grid-cols-3 mb-6">
             <TabsTrigger value="import" className="gap-1.5">
@@ -119,7 +120,7 @@ function LandingHero({ onStart }: { onStart: () => void }) {
       </button>
 
       <p className="mt-4 text-xs text-muted-foreground max-w-md">
-        数据仅存储在你的浏览器本地，不上传到服务器。需要你自己的 DeepSeek 或 OpenAI API Key。
+        所有数据仅存储在你的浏览器本地。AI 分析由 DeepSeek 驱动，分析完成后不保留数据。
       </p>
     </div>
   );
