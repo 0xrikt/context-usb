@@ -27,8 +27,10 @@ export function encodeContextToken(contextFiles: ContextFile[]): string {
     })),
   };
   const json = JSON.stringify(compact);
-  // Use base64url encoding (URL-safe)
-  return btoa(json)
+  // Encode UTF-8 string to base64url (handles Chinese characters)
+  const bytes = new TextEncoder().encode(json);
+  const binary = Array.from(bytes, (b) => String.fromCharCode(b)).join("");
+  return btoa(binary)
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
@@ -44,7 +46,10 @@ export function decodeContextToken(token: string): ContextFile[] | null {
       .replace(/-/g, "+")
       .replace(/_/g, "/");
     const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-    const json = atob(padded);
+    // Decode base64 to UTF-8 string (handles Chinese characters)
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
     const compact: CompactContext = JSON.parse(json);
 
     if (!compact.files || !Array.isArray(compact.files)) return null;
