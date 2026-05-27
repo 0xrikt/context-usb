@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { isValidToken } from "@/lib/sync/token";
-import { loadContext } from "@/lib/sync/storage";
+import { decodeContextToken } from "@/lib/sync/storage";
 import { handleMcpRequest } from "@/lib/mcp/handler";
 import type { JsonRpcRequest } from "@/lib/mcp/types";
 
-// CORS headers for MCP clients
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -32,24 +31,24 @@ export async function POST(request: Request) {
         id: null,
         error: {
           code: -32000,
-          message: "Missing or invalid token. Add ?token=YOUR_TOKEN to the URL.",
+          message: "Missing or invalid token. Generate one in the Context USB app.",
         },
       },
       { status: 401, headers: corsHeaders }
     );
   }
 
-  // Load user's context from storage
-  const contextFiles = await loadContext(token);
+  // Decode context from self-contained token
+  const contextFiles = decodeContextToken(token) || [];
 
   try {
     const body = await request.json();
 
-    // Handle batch requests (array of JSON-RPC messages)
+    // Handle batch requests
     if (Array.isArray(body)) {
       const responses = body
         .map((req: JsonRpcRequest) =>
-          handleMcpRequest(req, contextFiles || [])
+          handleMcpRequest(req, contextFiles)
         )
         .filter(Boolean);
 
@@ -57,10 +56,9 @@ export async function POST(request: Request) {
     }
 
     // Single request
-    const response = handleMcpRequest(body as JsonRpcRequest, contextFiles || []);
+    const response = handleMcpRequest(body as JsonRpcRequest, contextFiles);
 
     if (!response) {
-      // Notification - no response needed
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
@@ -71,10 +69,7 @@ export async function POST(request: Request) {
       {
         jsonrpc: "2.0",
         id: null,
-        error: {
-          code: -32700,
-          message: "Parse error: invalid JSON",
-        },
+        error: { code: -32700, message: "Parse error: invalid JSON" },
       },
       { status: 400, headers: corsHeaders }
     );

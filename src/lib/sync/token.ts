@@ -1,14 +1,8 @@
-// Token generation for MCP sync
-// Uses crypto.randomUUID for zero-dependency unique tokens
-
-export function generateToken(): string {
-  // Generate a URL-safe random token
-  const uuid = crypto.randomUUID();
-  // Remove hyphens for a cleaner URL
-  return uuid.replace(/-/g, "");
-}
+// Token validation for self-contained context tokens
+// Tokens are base64url-encoded JSON strings
 
 export function isValidToken(token: string): boolean {
-  // 32 hex characters (UUID without hyphens)
-  return /^[a-f0-9]{32}$/.test(token);
+  // Self-contained tokens are base64url strings (minimum viable length)
+  // Must be at least 10 chars and only contain base64url characters
+  return token.length >= 10 && /^[A-Za-z0-9_-]+$/.test(token);
 }

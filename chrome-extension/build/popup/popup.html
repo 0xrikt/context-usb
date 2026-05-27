@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 340px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #fff;
+      color: #111;
+    }
+
+    .header {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header svg { width: 20px; height: 20px; }
+    .header h1 { font-size: 15px; font-weight: 600; }
+    .header .tagline {
+      font-size: 11px;
+      color: #888;
+      margin-left: auto;
+    }
+
+    .content { padding: 16px; }
+
+    /* Status states */
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .status.ready {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status.empty {
+      background: #fefce8;
+      color: #854d0e;
+      border: 1px solid #fef08a;
+    }
+
+    .status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status.ready .dot { background: #22c55e; }
+    .status.empty .dot { background: #eab308; }
+
+    /* Preview */
+    .preview {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.5;
+      max-height: 120px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .preview.hidden { display: none; }
+
+    /* Inject button */
+    .inject-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .inject-btn.active {
+      background: #000;
+      color: #fff;
+    }
+
+    .inject-btn.active:hover {
+      background: #333;
+    }
+
+    .inject-btn.disabled {
+      background: #f3f4f6;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .inject-btn.success {
+      background: #22c55e;
+      color: #fff;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 12px 16px;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer a {
+      font-size: 12px;
+      color: #666;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      color: #000;
+      text-decoration: underline;
+    }
+
+    .stats {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .site-name {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .site-name strong { color: #111; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18V6"/><path d="M8 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/><path d="M16 18h4a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4"/></svg>
+    <h1>Context USB</h1>
+    <span class="tagline">让 AI 读懂你</span>
+  </div>
+
+  <div class="content">
+    <div id="status" class="status empty">
+      <span class="dot"></span>
+      <span id="status-text">正在加载...</span>
+    </div>
+
+    <div id="preview" class="preview hidden"></div>
+
+    <button id="inject-btn" class="inject-btn disabled" disabled>
+      <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+      <span id="btn-text">注入上下文到当前页面</span>
+    </button>
+
+    <div id="site-info" class="site-name" style="display:none"></div>
+  </div>
+
+  <div class="footer">
+    <a href="https://context-usb.vercel.app" target="_blank">打开 Context USB</a>
+    <span id="stats" class="stats"></span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,57 +1,82 @@
-// Storage abstraction for synced context data
-// Uses in-memory Map as primary storage (works without external services)
-// Can be upgraded to Vercel KV later for persistence across cold starts
+// Self-contained context storage
+// Encodes context data directly in the token (base64), no server-side storage needed
+// The MCP endpoint decodes the token to get context data
 
 import type { ContextFile } from "../connectors/types";
 
-interface StoredContext {
-  contextFiles: Array<{
-    type: string;
-    label: string;
-    content: string;
-    visibility: string;
+interface CompactContext {
+  files: Array<{
+    t: string; // type
+    l: string; // label
+    c: string; // content
+    v: string; // visibility
   }>;
-  updatedAt: string;
 }
 
-// In-memory store (resets on cold start, sufficient for personal use)
-const memoryStore = new Map<string, StoredContext>();
-
-export async function saveContext(
-  token: string,
-  contextFiles: ContextFile[]
-): Promise<void> {
-  const data: StoredContext = {
-    contextFiles: contextFiles.map((f) => ({
-      type: f.type,
-      label: f.label,
-      content: f.content,
-      visibility: f.visibility,
+/**
+ * Encode context files into a self-contained token string
+ * The token is a base64url-encoded JSON of the compact context
+ */
+export function encodeContextToken(contextFiles: ContextFile[]): string {
+  const compact: CompactContext = {
+    files: contextFiles.map((f) => ({
+      t: f.type,
+      l: f.label,
+      c: f.content,
+      v: f.visibility,
     })),
-    updatedAt: new Date().toISOString(),
   };
+  const json = JSON.stringify(compact);
+  // Use base64url encoding (URL-safe)
+  return btoa(json)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
 
-  memoryStore.set(`ctx:${token}`, data);
+/**
+ * Decode a self-contained token back into context files
+ */
+export function decodeContextToken(token: string): ContextFile[] | null {
+  try {
+    // Restore base64 padding
+    const base64 = token
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+    const json = atob(padded);
+    const compact: CompactContext = JSON.parse(json);
+
+    if (!compact.files || !Array.isArray(compact.files)) return null;
+
+    return compact.files.map((f) => ({
+      id: `synced-${f.t}`,
+      type: f.t as ContextFile["type"],
+      label: f.l,
+      content: f.c,
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      visibility: f.v as ContextFile["visibility"],
+    }));
+  } catch {
+    return null;
+  }
+}
+
+// Legacy API compatibility — these are now no-ops since storage is self-contained
+export async function saveContext(
+  _token: string,
+  _contextFiles: ContextFile[]
+): Promise<void> {
+  // No-op: context is encoded in the token itself
 }
 
 export async function loadContext(
   token: string
 ): Promise<ContextFile[] | null> {
-  const data = memoryStore.get(`ctx:${token}`) ?? null;
-
-  if (!data?.contextFiles) return null;
-
-  return data.contextFiles.map((f) => ({
-    id: `synced-${f.type}`,
-    type: f.type as ContextFile["type"],
-    label: f.label,
-    content: f.content,
-    version: 1,
-    updatedAt: data.updatedAt,
-    visibility: f.visibility as ContextFile["visibility"],
-  }));
+  return decodeContextToken(token);
 }
 
-export async function deleteContext(token: string): Promise<void> {
-  memoryStore.delete(`ctx:${token}`);
+export async function deleteContext(_token: string): Promise<void> {
+  // No-op: just discard the token client-side
 }

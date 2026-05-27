@@ -2,13 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
-import { generateToken } from "@/lib/sync/token";
-import { Copy, Check, RefreshCw, Trash2, Plug, Loader2 } from "lucide-react";
+import { encodeContextToken } from "@/lib/sync/storage";
+import { Copy, Check, RefreshCw, Trash2, Plug } from "lucide-react";
 
 export function McpSetupCard() {
   const { mcpToken, setMcpToken, contextFiles } = useStore();
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   const hasContext = contextFiles.some(
@@ -19,43 +17,15 @@ export function McpSetupCard() {
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/mcp?token=${mcpToken}`
     : "";
 
-  const syncContext = useCallback(
-    async (token: string) => {
-      setIsSyncing(true);
-      try {
-        const res = await fetch("/api/context-sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, contextFiles }),
-        });
-        if (res.ok) {
-          setLastSynced(new Date().toLocaleTimeString());
-        }
-      } catch (err) {
-        console.error("Sync failed:", err);
-      } finally {
-        setIsSyncing(false);
-      }
-    },
-    [contextFiles]
-  );
-
-  const handleEnable = useCallback(async () => {
-    const token = generateToken();
+  const generateAndSetToken = useCallback(() => {
+    // Encode all context files directly into the token (self-contained)
+    const token = encodeContextToken(contextFiles);
     setMcpToken(token);
-    await syncContext(token);
-  }, [setMcpToken, syncContext]);
+  }, [contextFiles, setMcpToken]);
 
-  const handleRevoke = useCallback(async () => {
-    if (!mcpToken) return;
-    try {
-      await fetch(`/api/context-sync?token=${mcpToken}`, { method: "DELETE" });
-    } catch {
-      // Best effort
-    }
+  const handleRevoke = useCallback(() => {
     setMcpToken(null);
-    setLastSynced(null);
-  }, [mcpToken, setMcpToken]);
+  }, [setMcpToken]);
 
   const copyToClipboard = useCallback(
     async (text: string, key: string) => {
@@ -101,7 +71,7 @@ export function McpSetupCard() {
             等）可以直接读取你的个人上下文，无需手动复制粘贴。
           </p>
           <button
-            onClick={handleEnable}
+            onClick={generateAndSetToken}
             className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors"
           >
             <Plug className="h-4 w-4" />
@@ -116,7 +86,7 @@ export function McpSetupCard() {
               MCP Server URL
             </label>
             <div className="flex gap-2">
-              <code className="flex-1 text-xs bg-muted p-2.5 rounded-lg break-all font-mono">
+              <code className="flex-1 text-xs bg-muted p-2.5 rounded-lg break-all font-mono max-h-20 overflow-y-auto">
                 {mcpUrl}
               </code>
               <button
@@ -139,7 +109,7 @@ export function McpSetupCard() {
               Claude Desktop 配置（复制到 claude_desktop_config.json）
             </label>
             <div className="relative">
-              <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto font-mono">
+              <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto font-mono max-h-32 overflow-y-auto">
                 {mcpConfig}
               </pre>
               <button
@@ -156,23 +126,18 @@ export function McpSetupCard() {
             </div>
           </div>
 
-          {/* Sync status and actions */}
+          {/* Actions */}
           <div className="flex items-center justify-between">
             <div className="text-xs text-muted-foreground">
-              {lastSynced ? `上次同步: ${lastSynced}` : "已启用"}
+              编辑上下文后点击「更新」刷新 URL
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => syncContext(mcpToken)}
-                disabled={isSyncing}
-                className="flex items-center gap-1 text-xs px-3 py-1.5 border rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
+                onClick={generateAndSetToken}
+                className="flex items-center gap-1 text-xs px-3 py-1.5 border rounded-lg hover:bg-muted transition-colors"
               >
-                {isSyncing ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3 w-3" />
-                )}
-                同步
+                <RefreshCw className="h-3 w-3" />
+                更新
               </button>
               <button
                 onClick={handleRevoke}
