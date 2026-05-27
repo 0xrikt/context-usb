@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImportPanel } from "@/components/import-panel";
 import { ContextPanel } from "@/components/context-panel";
@@ -13,10 +13,16 @@ export default function Home() {
   const { contextFiles, rawEntries } = useStore();
   const hasContext = contextFiles.some((f) => f.content.length > 0);
   const hasData = rawEntries.length > 0;
-  const [showApp, setShowApp] = useState(hasData || hasContext);
-  const [activeTab, setActiveTab] = useState(
-    hasContext ? "context" : "import"
-  );
+  const [showApp, setShowApp] = useState(false);
+  const [activeTab, setActiveTab] = useState("import");
+
+  // Fix hydration: Zustand persist hydrates async, so update state once data loads
+  useEffect(() => {
+    if (hasData || hasContext) {
+      setShowApp(true);
+      if (hasContext) setActiveTab("context");
+    }
+  }, [hasData, hasContext]);
 
   return (
     <div className="min-h-screen flex flex-col">
