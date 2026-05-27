@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import { encodeContextToken } from "@/lib/sync/storage";
 import { Copy, Check, RefreshCw, Trash2, Plug } from "lucide-react";
+import { toast } from "sonner";
 
 export function McpSetupCard() {
   const { mcpToken, setMcpToken, contextFiles } = useStore();
@@ -21,10 +22,12 @@ export function McpSetupCard() {
     // Encode all context files directly into the token (self-contained)
     const token = encodeContextToken(contextFiles);
     setMcpToken(token);
+    toast.success("MCP Server 已更新");
   }, [contextFiles, setMcpToken]);
 
   const handleRevoke = useCallback(() => {
     setMcpToken(null);
+    toast.info("MCP Server 已撤销");
   }, [setMcpToken]);
 
   const copyToClipboard = useCallback(
