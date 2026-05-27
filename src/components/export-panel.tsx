@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store";
 import { generateCopyText } from "@/lib/export/copy-text";
 import { Copy, Check, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { McpSetupCard } from "@/components/mcp-setup-card";
 
 export function ExportPanel() {
   const { contextFiles } = useStore();
@@ -89,6 +90,9 @@ export function ExportPanel() {
           </pre>
         </div>
       </Card>
+
+      {/* MCP Server */}
+      <McpSetupCard />
 
       {/* 使用说明 */}
       <Card className="p-6">

@@ -15,6 +15,10 @@ interface AppState {
   updateContextFile: (id: string, content: string) => void;
   toggleVisibility: (id: string) => void;
 
+  // MCP sync
+  mcpToken: string | null;
+  setMcpToken: (token: string | null) => void;
+
   // UI state
   isProcessing: boolean;
   processingStep: string;
@@ -37,6 +41,8 @@ export const useStore = create<AppState>()(
 
       contextFiles: [],
       setContextFiles: (files) => set({ contextFiles: files }),
+      mcpToken: null,
+      setMcpToken: (token) => set({ mcpToken: token }),
       updateContextFile: (id, content) =>
         set((state) => ({
           contextFiles: state.contextFiles.map((f) =>
@@ -72,6 +78,7 @@ export const useStore = create<AppState>()(
         set({
           rawEntries: [],
           contextFiles: [],
+          mcpToken: null,
           isProcessing: false,
           processingStep: '',
           processingProgress: 0,
@@ -82,6 +89,7 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         rawEntries: state.rawEntries,
         contextFiles: state.contextFiles,
+        mcpToken: state.mcpToken,
       }),
     }
   )
